@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('welcome'));
+Route::get('/', fn () => [
+    'message' => 'pong',
+    'time' => now()->toIso8601String(),
+]);
 
 Route::prefix('api')->group(function () {
-    Route::get('/ping', fn () => [
-        'message' => 'pong',
-        'time' => now()->toIso8601String(),
-    ]);
+    Route::resource('/shop', ShopController::class)->only(['index']);
 });

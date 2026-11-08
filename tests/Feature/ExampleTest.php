@@ -17,9 +17,9 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_ping_returns_a_json_response(): void
+    public function test_root_returns_a_ping_json_response(): void
     {
-        $this->getJson('/api/ping')
+        $this->getJson('/')
             ->assertOk()
             ->assertJsonPath('message', 'pong')
             ->assertJsonStructure(['message', 'time']);
