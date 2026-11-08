@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Models\Logic\ShopLogic;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Shop extends Model
 {
-    use ShopLogic;
+    use ShopLogic, SoftDeletes;
 
     protected $table = 'shops';
 

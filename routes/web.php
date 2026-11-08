@@ -9,5 +9,5 @@ Route::get('/', fn () => [
 ]);
 
 Route::prefix('api')->group(function () {
-    Route::resource('/shop', ShopController::class)->only(['index']);
+    Route::resource('/shop', ShopController::class)->only(['index', 'store', 'update', 'destroy']);
 });

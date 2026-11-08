@@ -3,9 +3,11 @@
 namespace App\Models\Logic;
 
 use App\Models\RentalItem;
+use App\Models\Shop;
 use App\Models\ShopBranch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 trait ShopLogic
 {
@@ -57,5 +59,28 @@ trait ShopLogic
         $direction = $params['direction'] ?? 'desc';
 
         return $query->orderBy($sort, $direction)->orderBy('id', $direction);
+    }
+
+    // fn logic
+    public function saveFromRequest(array $data): Shop
+    {
+        return DB::transaction(function () use ($data) {
+            $this->fill($data)->save();
+            $this->syncBranches($data['branches']);
+
+            return $this;
+        });
+    }
+
+    private function syncBranches(array $branches): void
+    {
+        $existing = $this->branches()->get();
+
+        foreach($branches as $branch)
+        {
+            $model = isset($branch['id']) ? $existing->findOrFail($branch['id']) : $this->branches()->make();
+
+            $model->fill($branch)->save();
+        }
     }
 }
