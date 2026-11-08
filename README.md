@@ -1,59 +1,39 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RentHub
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+RentHub là dự án xây dựng nền tảng cho thuê đồ dùng nhiều shop, kết nối người cần thuê với các cửa hàng cung cấp máy ảnh, thiết bị cắm trại, máy chơi game, dụng cụ và thiết bị sự kiện.
 
-## About Laravel
+Dự án hướng đến quản lý toàn bộ vòng đời thuê: tìm đồ, chọn lịch, đặt thuê, thanh toán cọc, bàn giao, trả đồ và hoàn cọc.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Chức năng hướng đến
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Khám phá đồ cho thuê:** tìm kiếm, lọc theo danh mục, shop, giá và khoảng ngày còn trống.
+- **Đặt thuê:** xem báo giá, chọn thời gian, giữ chỗ và theo dõi trạng thái đơn.
+- **Thanh toán:** quản lý tiền thuê, tiền cọc, phí phát sinh và hoàn tiền.
+- **Giao nhận:** ghi nhận tình trạng đồ, hình ảnh bàn giao và kết quả kiểm tra khi trả.
+- **Quản lý shop:** quản lý chi nhánh, danh mục đồ, từng chiếc trong kho, lịch bảo trì và nhân viên.
+- **Tương tác:** lưu yêu thích, đánh giá sau khi thuê, nhắn tin và nhận thông báo.
+- **Quản trị nền tảng:** duyệt shop, kiểm duyệt nội dung, hỗ trợ tranh chấp và theo dõi báo cáo.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Người sử dụng
 
-## Learning Laravel
+| Vai trò       | Nhu cầu                                               |
+| ------------- | ----------------------------------------------------- |
+| Khách hàng    | Tìm đồ phù hợp, đặt thuê và quản lý các đơn của mình  |
+| Chủ shop      | Đăng đồ cho thuê, quản lý kho, nhân viên và doanh thu |
+| Nhân viên     | Xử lý đơn, bàn giao và nhận trả theo quyền được cấp   |
+| Quản trị viên | Quản lý hoạt động chung của nền tảng                  |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Công nghệ định hướng
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Backend:** Laravel 12, API JSON và Laravel Sanctum.
+- **Frontend:** Vue 3, TypeScript và Vite.
+- **Database:** MySQL.
+- **Tác vụ nền và realtime:** Laravel Queue, Scheduler, Notification và Reverb.
+- **Cache và hàng đợi:** Redis khi cần mở rộng.
+- **Môi trường phát triển:** Docker và Docker Compose.
 
-## Laravel Sponsors
+## Mục tiêu dự án
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+RentHub là dự án thực hành Laravel thông qua các bài toán thực tế: quan hệ dữ liệu, xác thực và phân quyền, xử lý đặt trùng lịch, giao dịch thanh toán, công việc nền và vận hành ứng dụng.
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Chi tiết nghiệp vụ và lộ trình phát triển nằm trong [tài liệu dự án](docs/roadmap.md).
