@@ -22,6 +22,10 @@ trait ShopLogic
         return $this->hasMany(ShopBranch::class);
     }
 
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
     public function scopeSimple(Builder $query): Builder
     {
         return $query->select([
@@ -38,11 +42,19 @@ trait ShopLogic
     }
 
     // scope
+    /**
+     * @param Builder $query
+     * @param array<string, mixed> $params
+     */
     public function scopeForList(Builder $query, array $params): Builder
     {
         return $query->simple()->byParams($params);
     }
 
+    /**
+     * @param Builder $query
+     * @param array<string, mixed> $params
+     */
     public function scopeByParams(Builder $query, array $params): Builder
     {
         $search = trim($params['search'] ?? '');
@@ -62,6 +74,9 @@ trait ShopLogic
     }
 
     // fn logic
+    /**
+     * @param array<string, mixed> $data
+     */
     public function saveFromRequest(array $data): Shop
     {
         return DB::transaction(function () use ($data) {
@@ -72,6 +87,9 @@ trait ShopLogic
         });
     }
 
+    /**
+     * @param array<string, mixed> $branches
+     */
     private function syncBranches(array $branches): void
     {
         $existing = $this->branches()->get();

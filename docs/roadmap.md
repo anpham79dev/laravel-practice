@@ -6,7 +6,7 @@
 
 ## 1. Mục tiêu và cách học
 
-Bạn đã đi làm và có thể đọc code để hiểu nhanh. Không cần học lại từng cú pháp PHP hoặc làm nhiều bài tập rời rạc trước khi xây sản phẩm.
+An đã làm full-stack hơn một năm, chủ yếu Laravel/Vue, và có kinh nghiệm xử lý nghiệp vụ. Mục tiêu hiện tại là củng cố nền tảng, tự biết bắt đầu một tính năng, viết và debug code khi không có AI. Kiểm tra chỗ hổng qua bài thực tế; giải thích kỹ PHP, SQL và Laravel tại điểm cần dùng. Lộ trình ba tháng và nhật ký học ở mục 20; không cần học lại mọi thứ từ đầu hoặc chỉ chạy theo số tính năng.
 
 - Mỗi chặng tạo ra một tính năng dùng được xuyên suốt database → backend → giao diện.
 - Giải thích PHP/OOP, HTTP, SQL tại chỗ khi tính năng cần đến.
@@ -15,7 +15,7 @@ Bạn đã đi làm và có thể đọc code để hiểu nhanh. Không cần h
 - Kiểm tra tay luồng mới trước, bổ sung test cho hành vi và rủi ro quan trọng trong cùng chặng.
 - Giữ PHPUnit hiện có. Pest là lựa chọn cú pháp, không phải điều kiện để đi tiếp.
 - Không tạo interface, repository hoặc microservice khi chưa có nhu cầu cụ thể.
-- Mỗi tính năng có tiêu chí hoàn thành; hiểu và làm được thì chuyển tiếp, không cần chia thành nhiều buổi nhỏ.
+- Mỗi tính năng có tiêu chí hoàn thành; chia thành các mục tiêu nhỏ vừa một lượt học, review và ôn lại trước khi chuyển tiếp.
 
 Không dự án nào sử dụng mọi API của Laravel. Đích đến là làm chủ các phần cốt lõi, tự lựa chọn công cụ và vận hành được ứng dụng có giao dịch, phân quyền và tác vụ nền.
 
@@ -55,18 +55,18 @@ Chưa làm ví rút tiền, đấu giá, AI gợi ý hoặc microservice trong M
 
 ## 3. Source và môi trường hiện tại
 
-| Hạng mục                   | Hiện trạng                                                                        |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| Backend                    | Laravel 12, PHP trong Docker, Composer                                            |
-| Database                   | Có MySQL 8.4 trong Docker (`laravel_practice`); `.env` local hiện vẫn chọn SQLite |
-| Docker service             | `app` và `db`                                                                     |
-| Backend URL                | `http://localhost:8000`                                                           |
-| Ping                       | `GET /api/ping`, khai báo trong `routes/web.php` với prefix `api`                 |
-| Sanctum                    | Đã cài package, có config và migration; chưa xây đăng nhập                        |
-| Frontend                   | Chưa tạo Vue app riêng                                                            |
-| Migration nghiệp vụ        | Có `create_rental_items_table`, chưa tự chạy migrate                              |
-| Model/Controller nghiệp vụ | Chưa tạo; đây là phần bạn sẽ code tiếp                                            |
-| Test                       | PHPUnit; test mẫu và smoke test ping                                              |
+| Hạng mục                   | Hiện trạng                                                                                                |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Backend                    | Laravel 12, PHP trong Docker, Composer                                                                    |
+| Database                   | Có MySQL 8.4 trong Docker (`laravel_practice`); `.env` local hiện vẫn chọn SQLite                         |
+| Docker service             | `app` và `db`                                                                                             |
+| Backend URL                | `http://localhost:8000`                                                                                   |
+| Ping                       | `GET /` trả JSON `message: pong` và `time` trong `routes/web.php`                                         |
+| Sanctum                    | Đã cài package, có config và migration; chưa xây đăng nhập                                                |
+| Frontend                   | Chưa tạo Vue app riêng                                                                                    |
+| Migration nghiệp vụ        | Có migration `shops`, `shop_branches`, `rental_items`; chưa xác minh lại trạng thái migrate trên DB local |
+| Model/Controller nghiệp vụ | Có Shop/ShopBranch/RentalItem; ShopController hỗ trợ danh sách, tạo, sửa, xóa mềm; RentalItem chưa có API |
+| Test                       | PHPUnit, 19 test hiện có; lần chạy trước trong hội thoại đạt 132 assertions trên SQLite bộ nhớ            |
 
 ```text
 laravel-practice/
@@ -125,14 +125,14 @@ docker compose down
 
 ### Quy ước route và CSRF
 
-Giữ `/api/ping` trong `web.php` như hiện tại. Prefix `api` chỉ đổi URL, không đổi middleware: route này vẫn thuộc nhóm `web` có session và CSRF.
+Hiện ping là `GET /`; các route `/api/shop` nằm trong `web.php`. Prefix `api` chỉ đổi URL, không đổi middleware: các route shop vẫn thuộc nhóm `web` có session và CSRF.
 
-**Trước khi thêm POST/PUT/PATCH/DELETE ở chặng 1, chọn và kiểm tra một cơ chế:**
+**Với các endpoint POST/PUT/PATCH/DELETE ở chặng 1, chọn và kiểm chứng một cơ chế:**
 
 - Tiếp tục dùng `web.php`: request ghi dữ liệu phải mang session cookie và CSRF token hợp lệ; dùng form Blade có `@csrf` hoặc client gửi token tương ứng.
 - Khi tách JSON API: tạo `routes/api.php` và đăng ký `api: __DIR__.'/../routes/api.php'` trong `bootstrap/app.php`; chuyển route nghiệp vụ sang đó. Prefix `/api` do cấu hình API thêm, không bọc thêm prefix lần nữa.
 
-Không tự động chuyển route trong lần đổi dự án này. Không tắt CSRF toàn ứng dụng để né lỗi 419. Chỉ đăng ký file route có tồn tại và tránh khai báo một endpoint ở cả hai file.
+Việc chọn cơ chế route/CSRF cho luồng ghi dữ liệu vẫn cần được thực hành và kiểm chứng ngoài test. Không tắt CSRF toàn ứng dụng để né lỗi 419. Chỉ đăng ký file route có tồn tại và tránh khai báo một endpoint ở cả hai file.
 
 Đến chặng Sanctum SPA, thiết lập đầy đủ stateful API, cookie/session, CORS và `/sanctum/csrf-cookie`. Cài package Sanctum riêng lẻ chưa tạo ra luồng đăng nhập hoạt động.
 
@@ -176,16 +176,16 @@ confirmed → cancelled (theo chính sách hủy)
 
 Đây là bản đồ thiết kế, **không tạo hết migration ngay đầu dự án**.
 
-| Nhóm           | Bảng dự kiến                                        | Mục đích                                                 |
-| -------------- | --------------------------------------------------- | -------------------------------------------------------- |
-| Danh mục       | `categories`, `rental_items`, `item_images`         | Listing, phân loại, ảnh và thứ tự ảnh                    |
-| Kho vật lý     | `rental_units`, `maintenance_periods`               | Từng chiếc, tình trạng, lịch bảo trì                     |
-| Tài khoản/shop | `users`, `shops`, `shop_branches`, `shop_accounts`, `shop_members`                    | Khách hàng tách tài khoản quản lý shop và quyền theo shop                 |
-| Đặt thuê       | `bookings`, `booking_lines`, `unit_reservations`    | Đơn, snapshot báo giá, phân bổ từng chiếc và khoảng thuê |
-| Thanh toán     | `payments`, `payment_events`, `refunds`             | Giao dịch, webhook đã nhận, hoàn tiền                    |
-| Giao nhận      | `handover_records`, `damage_reports`                | Checklist, ảnh bằng chứng, phí và người xác nhận         |
-| Cộng đồng      | `favorites`, `reviews`, `conversations`, `messages` | Yêu thích, đánh giá, chat                                |
-| Vận hành       | `notifications`, `audit_logs`                       | Thông báo và lịch sử thao tác                            |
+| Nhóm           | Bảng dự kiến                                                       | Mục đích                                                  |
+| -------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| Danh mục       | `categories`, `rental_items`, `item_images`                        | Listing, phân loại, ảnh và thứ tự ảnh                     |
+| Kho vật lý     | `rental_units`, `maintenance_periods`                              | Từng chiếc, tình trạng, lịch bảo trì                      |
+| Tài khoản/shop | `users`, `shops`, `shop_branches`, `shop_accounts`, `shop_members` | Khách hàng tách tài khoản quản lý shop và quyền theo shop |
+| Đặt thuê       | `bookings`, `booking_lines`, `unit_reservations`                   | Đơn, snapshot báo giá, phân bổ từng chiếc và khoảng thuê  |
+| Thanh toán     | `payments`, `payment_events`, `refunds`                            | Giao dịch, webhook đã nhận, hoàn tiền                     |
+| Giao nhận      | `handover_records`, `damage_reports`                               | Checklist, ảnh bằng chứng, phí và người xác nhận          |
+| Cộng đồng      | `favorites`, `reviews`, `conversations`, `messages`                | Yêu thích, đánh giá, chat                                 |
+| Vận hành       | `notifications`, `audit_logs`                                      | Thông báo và lịch sử thao tác                             |
 
 Quan hệ chính:
 
@@ -222,16 +222,16 @@ Bảng `shop_branches` gồm `id`, `shop_id`, `branch_name`, `address` (varchar 
 
 Schema `rental_items`:
 
-| Cột              | Kiểu                        | Ý nghĩa               |
-| ---------------- | --------------------------- | --------------------- |
-| `id`             | bigint PK                   | ID                    |
-| `shop_id`        | foreign ID, bắt buộc         | Shop sở hữu listing   |
-| `item_name`      | varchar(255)                | Tên đồ                |
-| `description`    | text nullable               | Mô tả                 |
-| `rental_price_per_day`     | unsigned bigint             | Giá thuê/ngày, VND    |
-| `deposit_amount` | unsigned bigint, mặc định 0 | Tiền cọc, VND         |
-| `is_active`      | boolean, mặc định true      | Có cho thuê hay không |
-| timestamps       | timestamp                   | Ngày tạo/cập nhật     |
+| Cột                    | Kiểu                        | Ý nghĩa               |
+| ---------------------- | --------------------------- | --------------------- |
+| `id`                   | bigint PK                   | ID                    |
+| `shop_id`              | foreign ID, bắt buộc        | Shop sở hữu listing   |
+| `item_name`            | varchar(255)                | Tên đồ                |
+| `description`          | text nullable               | Mô tả                 |
+| `rental_price_per_day` | unsigned bigint             | Giá thuê/ngày, VND    |
+| `deposit_amount`       | unsigned bigint, mặc định 0 | Tiền cọc, VND         |
+| `is_active`            | boolean, mặc định true      | Có cho thuê hay không |
+| timestamps             | timestamp                   | Ngày tạo/cập nhật     |
 
 ### Việc làm
 
@@ -243,21 +243,21 @@ Schema `rental_items`:
 6. Tìm theo tên, lọc `is_active`; chỉ cho sort theo danh sách cột được phép.
 7. Factory/seeder tạo dữ liệu giả; không để controller tự sinh dữ liệu mẫu.
 
-| Endpoint                                | Hành vi              |
-| --------------------------------------- | -------------------- |
-| `GET /api/shops` | Danh sách shop phân trang |
-| `POST /api/shops` | Tạo shop, trả 201 |
-| `GET /api/shops/{shop}` | Chi tiết shop |
-| `PATCH /api/shops/{shop}` | Cập nhật shop |
-| `DELETE /api/shops/{shop}` | Xóa shop rỗng; shop còn chi nhánh/listing trả lỗi nghiệp vụ |
-| `GET /api/shops/{shop}/branches` | Danh sách chi nhánh |
-| `POST /api/shops/{shop}/branches` | Thêm chi nhánh |
-| `GET/PATCH/DELETE /api/shops/{shop}/branches/{branch}` | Xem/sửa/xóa chi nhánh thuộc shop |
-| `GET /api/shops/{shop}/rental-items` | Danh sách đồ trong shop |
-| `POST /api/shops/{shop}/rental-items` | Thêm đồ vào shop, trả 201 |
-| `GET /api/shops/{shop}/rental-items/{rentalItem}` | Chi tiết đồ trong shop hoặc 404 |
-| `PATCH /api/shops/{shop}/rental-items/{rentalItem}` | Sửa đồ trong shop |
-| `DELETE /api/shops/{shop}/rental-items/{rentalItem}` | Xóa đồ trong shop, trả 204 |
+| Endpoint                                               | Hành vi                                                     |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| `GET /api/shops`                                       | Danh sách shop phân trang                                   |
+| `POST /api/shops`                                      | Tạo shop, trả 201                                           |
+| `GET /api/shops/{shop}`                                | Chi tiết shop                                               |
+| `PATCH /api/shops/{shop}`                              | Cập nhật shop                                               |
+| `DELETE /api/shops/{shop}`                             | Xóa shop rỗng; shop còn chi nhánh/listing trả lỗi nghiệp vụ |
+| `GET /api/shops/{shop}/branches`                       | Danh sách chi nhánh                                         |
+| `POST /api/shops/{shop}/branches`                      | Thêm chi nhánh                                              |
+| `GET/PATCH/DELETE /api/shops/{shop}/branches/{branch}` | Xem/sửa/xóa chi nhánh thuộc shop                            |
+| `GET /api/shops/{shop}/rental-items`                   | Danh sách đồ trong shop                                     |
+| `POST /api/shops/{shop}/rental-items`                  | Thêm đồ vào shop, trả 201                                   |
+| `GET /api/shops/{shop}/rental-items/{rentalItem}`      | Chi tiết đồ trong shop hoặc 404                             |
+| `PATCH /api/shops/{shop}/rental-items/{rentalItem}`    | Sửa đồ trong shop                                           |
+| `DELETE /api/shops/{shop}/rental-items/{rentalItem}`   | Xóa đồ trong shop, trả 204                                  |
 
 Lấy shop từ route và tạo listing qua quan hệ; không nhận `shop_id` tùy ý từ payload. Dùng scoped binding hoặc query qua shop để chặn URL ghép shop A với đồ của shop B. Chưa có auth thì CRUD shop và thông tin liên hệ chỉ thực hành local. Khi triển khai đăng nhập quản lý, kiểm tra tài khoản shop và quyền thành viên; không coi shop_id hoặc owner_email do client gửi là bằng chứng sở hữu.
 
@@ -451,30 +451,28 @@ Blade vẫn được học qua trang chào, form/session và mail template; sả
 
 ## 19. Tiến độ và việc tiếp theo
 
-- [x] Laravel + Docker + MySQL chạy được.
+- [x] Có cấu hình Laravel + Docker + MySQL; cần kiểm tra lại runtime trước buổi thực hành môi trường.
 - [x] Có ping trong web routes.
 - [x] Chọn nghiệp vụ RentHub và cập nhật tài liệu.
-- [x] Có migration `shops` và `rental_items` với khóa ngoại.
-- [ ] Chạy migration mới.
-- [ ] Tạo Shop CRUD → chi nhánh theo shop → RentalItem CRUD theo shop.
+- [x] Có migration `shops`, `shop_branches`, `rental_items` với khóa ngoại.
+- [x] API danh sách shop: tìm tên, lọc trạng thái, sắp xếp và phân trang.
+- [x] API tạo/sửa shop và thêm/sửa nhiều chi nhánh trong transaction; chi nhánh không gửi lên được giữ lại.
+- [x] API xóa mềm shop; có FormRequest, Resource và feature test cho các luồng hiện có.
+- [ ] Xác minh migration và schema trên database local; không suy ra từ test SQLite bộ nhớ.
+- [ ] Bổ sung xem chi tiết shop và quản lý/xóa chi nhánh theo quy tắc đã thống nhất.
+- [ ] RentalItem CRUD theo shop.
 - [ ] Chốt route/CSRF cho endpoint ghi dữ liệu.
-- [ ] FormRequest, Resource, Factory/Seeder và feature test CRUD.
+- [ ] Feature test cho `GET /api/shop/{shop}` (200, 404, đã xóa mềm, không có chi nhánh).
+- [ ] `ShopResource` khai báo rõ field + `whenLoaded('branches')`; `store`/`update` trả kèm branches.
+- [ ] Controller có return type, bỏ PHPDoc lặp type hint; sửa PHPDoc `syncBranches`.
+- [ ] Chốt 3 điểm lệch code/roadmap: id chi nhánh lạ trả 404 hay 422; update bắt buộc đủ trường hay cho bỏ qua; xóa shop còn chi nhánh.
+- [ ] Factory/Seeder nghiệp vụ, Request/Resource và feature test cho các API còn thiếu.
 - [ ] Tạo Vue app và màn hình catalog.
 - [ ] Các chặng đặt thuê, thanh toán và mở nhiều shop.
 
-**Việc ngay tiếp theo:** làm trọn chặng 1. Migration đã chuẩn bị sẵn; bạn tập trung Model → Controller → Validation → Resource → Route và kiểm tra HTTP. Chưa cần học một loạt class PHP thuần trước CRUD.
+**Tự học không cần trợ lý:** làm theo các bước B1–B8 trong [loi-khuyen-tu-hoc.md](loi-khuyen-tu-hoc.md) (bắt đầu từ B1 test `show`).
 
-```bash
-# Trong container
-php artisan migrate
-php artisan make:model Shop
-php artisan make:controller ShopController --api
-php artisan make:model RentalItem
-php artisan make:controller RentalItemController --api
-php artisan make:request StoreRentalItemRequest
-php artisan make:request UpdateRentalItemRequest
-php artisan make:resource RentalItemResource
-```
+**Việc ngay tiếp theo:** đánh giá mức hiểu code hiện có bằng một bài nhỏ về Builder/scope và bắt đầu đọc cấu hình Docker. Sau đó hoàn thiện chặng 1 theo lịch ở mục 20. Không tạo lại các model/controller đã có; An tập trung logic và kiểm chứng HTTP, trợ lý có thể chuẩn bị schema để review.
 
 ### Checklist trước khi coi một tính năng là xong
 
@@ -492,3 +490,64 @@ php artisan make:resource RentalItemResource
 ### Ghi chú schema khách hàng
 
 Các trường phone, avatar_path và suspended_at nằm trực tiếp trong migration users gốc; không còn migration add_profile_fields riêng. Migration users gốc đã được áp dụng trên SQLite local trước thay đổi này, nên migrate thông thường không tự thêm ba cột vào bảng cũ. Khi dựng database mới, schema đầy đủ được tạo ngay; nếu giữ database cũ thì cần migration nâng cấp riêng. Không tự reset database đang có dữ liệu.
+
+## 20. Kế hoạch học ba tháng và nhật ký của An
+
+### Mục tiêu và lịch khả thi
+
+- Khoảng học: **22/11/2026–22/02/2027**. Đây là kế hoạch điều chỉnh theo kết quả, không phải cam kết thành chuyên gia sau đúng ba tháng.
+- Đã có hơn một năm Laravel/Vue; ưu tiên củng cố PHP/Laravel, SQL, Vue/TypeScript và debugging qua RentHub. Học viên tự viết logic, tự giải thích được quyết định và sửa được lỗi.
+- Phạm vi chat này là học Laravel và ôn kiến thức liên quan. An xác nhận mỗi lần tìm đến là đã sẵn sàng học; không đưa đồ án khác vào buổi học hoặc dùng lịch đồ án, công việc, tăng ca để tự giảm nhịp hay trì hoãn nội dung.
+- Tiến theo mức hiểu và kết quả thực hành trong từng buổi; giới hạn thời gian chỉ áp dụng khi An chủ động nêu. Không áp lịch học nhẹ trước giữa tháng 12 hay định mức giờ/tuần từ suy đoán trước đó. Chưa có lịch nhắc tự động.
+- Học Docker ngay; học Linux và CI/CD trong chặng deploy. Kubernetes, realtime, thanh toán sandbox và báo cáo nâng cao là phần mở rộng sau khi nền tảng vững.
+
+### Các chặng thực hành
+
+| Chặng trong ba tháng          | Trọng tâm                                                                                                                                                                                         | Bằng chứng cần có                                                                                                                                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Nền tảng và môi trường    | Ôn chỗ hổng PHP qua ShopLogic: `$this`, `::`, array, null, closure, type, PHPDoc; HTTP → route → request → controller → Eloquent. Docker: image/container, Compose app/db, port, volume, env, log | Tự giải thích Builder khác Model/Collection; dự đoán một truy vấn; đọc được Dockerfile/Compose và tìm log lỗi kết nối DB. Không yêu cầu hoàn thành toàn bộ phần này ngay buổi đầu                                                     |
+| 2 — CRUD, SQL và test         | Hoàn thiện CRUD RentalItem theo shop, validation, Resource, binding, transaction; SQL khóa ngoại/index và Factory/Seeder; test hành vi                                                            | Tự triển khai một endpoint; xử lý input sai/ID sai/ID thuộc shop khác; kiểm thử rollback; xác minh dữ liệu MySQL local. Kiểm tra thực tế CSRF/API middleware                                                                          |
+| 3 — Auth và UI                | Auth Sanctum, phân biệt authentication/authorization, Policy và phạm vi shop; Vue/TypeScript nối một màn hình danh mục, form, lỗi và phân trang; eager loading                                    | Luồng đăng nhập hoạt động; phân quyền được kiểm thử; màn hình gọi API và xử lý lỗi; phát hiện và sửa một truy vấn N+1                                                                                                                 |
+| 4 — Nghiệp vụ và vận hành     | Một luồng đặt thuê tối thiểu: chiếc đồ vật lý, khoảng ngày, báo giá, transaction và chống trùng trên MySQL; queue/scheduler ở mức cần dùng. Docker triển khai, Linux cơ bản, CI                   | Test biên ngày/giá và rollback; thử cạnh tranh trên MySQL bằng kết nối độc lập nếu triển khai đặt thuê; CI chạy test; bản staging có log và hướng dẫn chạy. Ưu tiên deploy luồng đã có trước khi mở rộng đặt thuê nếu thiếu thời gian |
+| 5 — Đánh giá trước 22/02/2027 | Ôn, hoàn thiện và đánh giá độc lập                                                                                                                                                                | Nhận một yêu cầu nhỏ mới, tự chia việc → API → UI → test → deploy; tái hiện và sửa một lỗi được cài vào; giải thích tradeoff, chưa xem lời giải mẫu trước khi thử                                                                     |
+
+Lộ trình nghiệp vụ đầy đủ ở mục 6–17 vẫn là định hướng dài hạn; không bắt buộc nhồi toàn bộ các chặng đó vào ba tháng. Mục tiêu bắt buộc là CRUD theo shop, auth/phân quyền, SQL/Eloquent, debug/test, một UI dùng được và deploy. Đặt thuê nâng cao và thanh toán chỉ mở khi các mục cốt lõi đã vững.
+
+### Nhịp một buổi học
+
+1. Nhắc mục tiêu và kiểm tra một kiến thức liên quan từ bài trước (5–10 phút).
+2. Giải thích một khái niệm qua code hiện có, gồm input/output và vì sao dùng nó (10–15 phút).
+3. An tự viết hoặc sửa một phần nhỏ; trợ lý gợi ý tăng dần khi vướng (20–40 phút).
+4. Kiểm tra bằng request, SQL/log hoặc test thích hợp; review lỗi và cách đặt tên/tổ chức (10–15 phút).
+5. An diễn giải lại và chốt bài tiếp theo; ghi ngắn tiến độ (5 phút).
+
+Buổi ngắn có thể chỉ làm một bước. Khi An hỏi trực tiếp về cú pháp hoặc lỗi, trả lời rõ trước; không biến mọi câu hỏi thành bài kiểm tra.
+
+### Thang đánh giá một kỹ năng
+
+| Mức               | Bằng chứng                                                                     |
+| ----------------- | ------------------------------------------------------------------------------ |
+| Chưa đánh giá     | Có thể đã gặp trong source nhưng chưa kiểm tra mức hiểu                        |
+| Hiểu có hướng dẫn | Giải thích đúng một ví dụ và làm được khi có gợi ý                             |
+| Tự làm            | Hoàn thành bài tương tự, tự kiểm tra và sửa lỗi; có thể tra tài liệu cú pháp   |
+| Áp dụng độc lập   | Làm được tình huống mới, giải thích tradeoff, debug và viết kiểm chứng phù hợp |
+
+Không nâng mức chỉ vì nói “đã hiểu”, copy được ví dụ hoặc repo có code chạy. Có thể tra tài liệu trong bài độc lập; cần tự quyết định cách làm thay vì phụ thuộc lời giải AI.
+
+### Điểm xuất phát và nhật ký
+
+**Source đã có:** Shop list/create/update/soft delete, đồng bộ chi nhánh, Request/Resource, quan hệ và test; RentalItem có model/migration. Bộ test 19 test từng đạt 132 assertions trong hội thoại, chưa chạy lại sau các thay đổi tài liệu/PHPDoc. Runtime MySQL hiện chưa được xác minh lại.
+
+**Kiến thức vừa trao đổi:** PHPDoc `/** */`, `@param`, `@return`, type hint, `array<string, mixed>`, khi nào comment có ích và cách nối local scope. Đã sửa một lỗi mở comment bằng `//**`; An tiếp tục tự bổ sung PHPDoc. Cần kiểm tra khả năng giải thích/áp dụng, chưa đánh dấu đã thành thạo.
+
+**Điểm review kế tiếp:** `syncBranches()` nhận danh sách các mảng chi nhánh; kiểm tra lại PHPDoc `array<string, mixed>` hiện tại bằng cách yêu cầu An xác định kiểu key của mảng ngoài, thay vì tự sửa hộ trước khi học.
+
+| Ngày       | Nội dung                                                               | Bằng chứng và giới hạn                                                                              | Bài tiếp theo                                                                                                                                       |
+| ---------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 22/11/2026 | Chốt mục tiêu ba tháng, ghi cách học; cập nhật hiện trạng roadmap      | Đã đọc source và lưu hướng dẫn. Chưa có bài đánh giá độc lập                                        | Tự diễn giải `Shop::forList($params)->paginate(15)`; dự đoán điều gì thay đổi khi thay `paginate()` bằng `get()`, rồi đọc hai service trong Compose |
+| 22/11/2026 | An làm rõ: mỗi lần vào chat là đã sẵn sàng học Laravel và ôn kiến thức | Đã cập nhật AGENTS.md và bỏ lịch giảm nhịp dựa trên đồ án/tăng ca; chưa phát sinh bài thực hành mới | Tiếp tục bài Builder/scope đang chờ trả lời, điều chỉnh theo mức hiểu trong buổi                                                                    |
+| 22/11/2026 | An đã bổ sung `@param` cho controller và muốn code tính năng tiếp theo | Đã đọc controller/route: chưa có `show`; chưa đánh giá độc lập Builder/scope hoặc chạy lại test | An tự thêm `GET /api/shop/{shop}` và `show(Shop $shop)`, trả ShopResource kèm branches; review trước khi thêm bài khác |
+| 22/11/2026 | Review lần đầu hàm `show()` do An viết | Có chữ ký `show(Shop $shop): ShopResource`; đang truyền model vào `findOrFail()` rồi lấy collection chi nhánh để bọc ShopResource. Route chưa bật `show`, đã xác nhận bằng route:list; chưa kiểm thử HTTP hành vi | An sửa dùng model đã binding, load branches rồi trả ShopResource của shop; bật route show và thử các ca 200/404/chi nhánh rỗng |
+| 22/11/2026 | Review controller + ShopLogic sau khi An sửa `show()` | `show()` đã dùng binding + `load('branches')`, route show đã bật (route:list). `php -l` qua, chạy lại 19 test/132 assertions đạt; `show` chưa có test. Vướng: Resource dùng `parent::toArray` nên shape response lệch (store/update thiếu branches, show có `deleted_at`, index thì không); route ghi dữ liệu nằm trong nhóm `web` (CSRF); PHPDoc lặp type hint, thiếu return type | An viết feature test cho `show` (200/404/đã xóa mềm/không có chi nhánh), rồi khai báo field rõ ràng trong ShopResource + `whenLoaded('branches')` |
+
+Khi nối lại buổi học, đọc dòng nhật ký mới nhất và kiểm tra code hiện tại. Chỉ lưu thay đổi mục tiêu, kết quả thực hành và điều còn vướng; không dùng nhật ký thay cho kiểm chứng mới.
