@@ -90,11 +90,13 @@ trait ShopLogic
     }
 
     /**
-     * @param array<string, mixed> $branches
+     * @param list<array<string, mixed>> $branches
      */
     private function syncBranches(array $branches): void
     {
         $existing = $this->branches()->get();
+
+        $this->branches()->whereNotIn('id', array_column($branches, 'id'))->delete();
 
         foreach($branches as $branch)
         {
