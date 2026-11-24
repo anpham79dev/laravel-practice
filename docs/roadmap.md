@@ -65,8 +65,8 @@ Chưa làm ví rút tiền, đấu giá, AI gợi ý hoặc microservice trong M
 | Sanctum                    | Đã cài package, có config và migration; chưa xây đăng nhập                                                |
 | Frontend                   | Chưa tạo Vue app riêng                                                                                    |
 | Migration nghiệp vụ        | Có migration `shops`, `shop_branches`, `rental_items`; chưa xác minh lại trạng thái migrate trên DB local |
-| Model/Controller nghiệp vụ | Có Shop/ShopBranch/RentalItem; ShopController hỗ trợ danh sách, tạo, sửa, xóa mềm; RentalItem chưa có API |
-| Test                       | PHPUnit, 19 test hiện có; lần chạy trước trong hội thoại đạt 132 assertions trên SQLite bộ nhớ            |
+| Model/Controller nghiệp vụ | Có Shop/ShopBranch/RentalItem; ShopController hỗ trợ danh sách, chi tiết, tạo, sửa, xóa mềm; RentalItem chưa có API |
+| Test                       | PHPUnit, 19 test; chạy lại 23/11/2026 trên bản copy sạch (PHP 8.2, SQLite bộ nhớ): 19 passed, 132 assertions; `pint --test` còn 8 file lỗi style |
 
 ```text
 laravel-practice/
@@ -79,6 +79,9 @@ laravel-practice/
 ├── resources/views/welcome.blade.php
 ├── tests/
 ├── docs/roadmap.md
+├── docs/advice.md             # Lời khuyên tự học và việc làm B0–B8, D1–D6
+├── docs/skill.md              # Chuẩn làm đúng Laravel / SQL / DevOps và cách tự kiểm
+├── docs/review-fix-23-11.md   # Lỗi đã biết của source ngày 23/11/2026
 ├── composer.json
 └── frontend/                  # Tạo ở chặng 2
 ```
@@ -100,9 +103,9 @@ docker compose run --rm --no-deps app php artisan migrate
 docker compose up -d app
 ```
 
-`.env.example` đã cấu hình MySQL khớp `docker-compose.yml`. Laravel dùng `DB_HOST=db`, `DB_PORT=3306`; DBeaver/TablePlus trên máy dùng host `127.0.0.1`, cổng `3307`, tài khoản theo Compose. Không commit `.env`.
+`.env.example` đã cấu hình MySQL khớp `docker-compose.yml`. Laravel dùng `DB_HOST=db`, `DB_PORT=3306`; DBeaver/TablePlus trên máy dùng host `127.0.0.1`, cổng `3307`, tài khoản theo Compose. Không commit `.env`. Sau khi làm D2, `.env.example` sẽ để trống mật khẩu: phải điền giá trị vào `.env` **trước** lần `up` đầu tiên, vì MySQL chỉ đọc mật khẩu lúc khởi tạo volume.
 
-**Trước khi làm CRUD:** `.env` local hiện còn `DB_CONNECTION=sqlite`. Muốn dùng MySQL theo roadmap, cập nhật toàn bộ nhóm `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` theo `.env.example`, rồi chạy `php artisan config:clear` và `php artisan migrate` trong container. Chỉ bật container MySQL không tự chuyển database của Laravel; dữ liệu SQLite cũ cũng không tự được chuyển sang MySQL. Giữ nguyên APP_KEY và các cấu hình local khác.
+**Nếu đã có `.env` cũ dùng `DB_CONNECTION=sqlite`** (ví dụ trên máy khác): muốn dùng MySQL theo roadmap, cập nhật toàn bộ nhóm `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` theo `.env.example`, rồi chạy `php artisan config:clear` và `php artisan migrate` trong container. Chỉ bật container MySQL không tự chuyển database của Laravel; dữ liệu SQLite cũ cũng không tự được chuyển sang MySQL. Giữ nguyên APP_KEY và các cấu hình local khác.
 
 Không chạy `composer create-project` trong repo có sẵn. Trang chào và ping không cần npm/Vite. Giữ nguyên khai báo yêu cầu PHP hiện tại; việc nâng/chỉnh dependency không thuộc lần chuyển dự án này.
 
@@ -121,11 +124,11 @@ docker compose logs -f app
 docker compose down
 ```
 
-Đã vào shell container thì dùng trực tiếp `php artisan ...` và `composer ...`. Trong WSL, đường dẫn repo là `/mnt/d/Code/Be/laravel-practice`. Không dùng `down -v` hoặc `migrate:fresh` với database có dữ liệu cần giữ.
+Đã vào shell container thì dùng trực tiếp `php artisan ...` và `composer ...`. Trong WSL, ổ Windows nằm dưới `/mnt/<ổ>/`; ví dụ `C:\dev\laravel-practice` là `/mnt/c/dev/laravel-practice`. Không dùng `down -v` hoặc `migrate:fresh` với database có dữ liệu cần giữ.
 
 ### Quy ước route và CSRF
 
-Hiện ping là `GET /`; các route `/api/shop` nằm trong `web.php`. Prefix `api` chỉ đổi URL, không đổi middleware: các route shop vẫn thuộc nhóm `web` có session và CSRF.
+Hiện ping là `GET /` trong `web.php`. Từ 23/11/2026, route shop nằm trong `routes/api.php` (`Route::apiResource('shops', ...)`, URL `/api/shops`), thuộc nhóm `api`: không session, không CSRF. Trước đó chúng nằm trong `web.php` với `prefix('api')`; prefix chỉ đổi URL, không đổi middleware, nên POST từ client thật bị 419.
 
 **Với các endpoint POST/PUT/PATCH/DELETE ở chặng 1, chọn và kiểm chứng một cơ chế:**
 
@@ -428,26 +431,155 @@ Thực hiện xuyên suốt rồi tổng rà ở đây, không chờ đến cu�
 
 **Hoàn thành khi:** người khác dựng staging theo README được; deploy không mất đơn/file; phục hồi được bản sao lưu; biết cách rollback ứng dụng và xử lý migration đã chạy.
 
-## 18. Bản đồ kiến thức để tự kiểm tra
+## 18. Bản đồ kiến thức Laravel
 
-| Nhóm Laravel                                          | Nơi thực hành         |
-| ----------------------------------------------------- | --------------------- |
-| Routing, middleware, lifecycle, HTTP, exception       | Chặng 1, 4, 11        |
-| Migration, Eloquent, binding, relations, casts, scope | Chặng 1–5             |
-| Validation, Resource, pagination                      | Chặng 1–2             |
-| Session, CSRF, Sanctum, auth, Gate/Policy, rate limit | Chặng 1, 4, 9–11      |
-| Storage, upload, private file, filesystem fake        | Chặng 2, 7            |
-| DB transaction, lock, concurrency, query/index        | Chặng 3, 5, 10        |
-| Container, Provider, interface, DTO, Action           | Chặng 5–6, 11         |
-| HTTP Client, webhook, signed payload, idempotency     | Chặng 6               |
-| Event, Listener, Queue, Job, Mail, Notification       | Chặng 8               |
-| Scheduler, Artisan command, batch import/export       | Chặng 8, 10–11        |
-| Broadcasting, private channel, Reverb                 | Chặng 9               |
-| Cache, Redis, profiling, search                       | Chặng 10              |
-| Factory, Seeder, unit/feature/integration test        | Xuyên suốt từ chặng 1 |
-| Localization, config, logging, CI/CD, deployment      | Chặng 11–12           |
+Bảng này là danh sách đầy đủ để biết mình đã học đủ Laravel chưa, và còn thiếu chỗ nào. Bảng được dựng theo mục lục tài liệu Laravel 12: Getting Started, Architecture Concepts, The Basics, Digging Deeper, Security, Database, Eloquent ORM, Testing, Packages. Mỗi trang tài liệu có ít nhất một dòng tương ứng. Trợ lý dựng bảng ngày 23/11/2026 theo hiểu biết của mình, **chưa đối chiếu với trang chính thức**. Bài đầu tiên: mở sidebar `laravel.com/docs/12.x`, đối chiếu từng trang với bảng, thiếu thì thêm dòng. Chuẩn làm đúng của từng nhóm nằm ở [skill.md](skill.md); số mục ghi ở tiêu đề mỗi nhóm.
 
-Blade vẫn được học qua trang chào, form/session và mail template; sản phẩm chính dùng Vue SPA. Package nâng cao chỉ thêm khi có bài toán, không cài tất cả để đủ danh sách.
+**Mức cần đạt** (dùng thang ở mục 20):
+
+- **Lõi:** dùng hằng ngày trong dự án Laravel. Đích: "Tự làm", sau đó "Áp dụng độc lập".
+- **Mở rộng:** dùng khi có nhu cầu cụ thể. Đích: "Tự làm", qua ít nhất một bài trong RentHub.
+- **Biết:** hiểu nó giải quyết vấn đề gì, khi nào nên và không nên dùng; đọc trang tài liệu, có thể thử nhanh ngoài repo. Đạt khi giải thích được bằng 3–5 câu, kể cả vì sao RentHub chưa dùng.
+
+**Phạm vi theo thời gian:** trước 22/02/2027, phạm vi bắt buộc ghi ở mục 20. Bảng này cho biết phần còn lại để đi tiếp theo mục 21. Khi bắt đầu một chặng, lọc các dòng của chặng đó để đưa vào việc làm.
+
+**Cột "Học ở":** "Chặng N" là chặng sản phẩm ở mục 6–17; B0–B8 và D1–D6 là các bước trong [advice.md](advice.md).
+
+**Cột "Hiện tại":** `–` là chưa đánh giá; `HD` là hiểu có hướng dẫn; `TL` là tự làm; `ĐL` là áp dụng độc lập. Chỉ đổi khi đã có bằng chứng như cột "Đạt khi", ghi kèm ngày (ví dụ `TL 15/12`), và thêm một dòng nhật ký ở mục 20.
+
+### 18.1 PHP và kiến trúc (skill.md mục 2)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| PHP hiện đại: type, null, array, closure, class/trait/interface, enum, readonly, `match`, namespace/PSR-4, exception | Lõi | Chặng 1 (đọc `ShopLogic`), chặng 5 (enum trạng thái) | Giải thích từng dòng `ShopLogic`; viết một enum có luật chuyển kèm unit test | – |
+| Composer: require/require-dev, autoload, `composer.lock`, ràng buộc phiên bản | Lõi | B0, B8 | Giải thích vì sao commit lock file; thêm rồi gỡ một package dev mà repo vẫn sạch | – |
+| Cài đặt, cấu hình, `.env`, config cache, cấu trúc thư mục | Lõi | B0, chặng 12 | Tạo một file config riêng; giải thích vì sao `env()` gọi ngoài config trả `null` sau `config:cache` | – |
+| Vòng đời request | Lõi | Chặng 1 | Viết 10 dòng mô tả đường đi của `POST /api/shops`, chỉ ra chỗ sinh 404/419/422/500 | – |
+| Service container, service provider, facade | Lõi | Chặng 1 (`AppServiceProvider`), chặng 6 (cổng thanh toán giả) | Thay một service bằng bản giả trong test; giải thích `register()` khác `boot()` | – |
+| Contract, real-time facade | Biết | – | Giải thích khác nhau giữa type-hint contract và type-hint class cụ thể | – |
+
+### 18.2 HTTP (skill.md mục 3)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Routing: `apiResource`, route lồng + `scoped()`, binding, `withTrashed`, group/prefix/name | Lõi | B4, B6, B7 | URL ghép sai shop trả 404; đọc hiểu được `route:list -v` | – |
+| Middleware: nhóm web/api, alias, middleware tự viết | Lõi | B4, chặng 4 | Tự viết một middleware có test | – |
+| CSRF và session | Lõi | B4, chặng 4 (Sanctum SPA) | Giải thích được 419 và sửa bằng cấu hình đúng, không tắt CSRF | – |
+| Controller: resource, một hành động (`__invoke`), return type | Lõi | B3, chặng 5 (hủy đơn) | Controller mỏng, có return type, Pint sạch | – |
+| Request và validation: FormRequest, rule cho mảng lồng, `Rule::exists` theo shop, `prepareForValidation`, `after`, Rule class | Lõi | B5, B7, chặng 5 (khoảng ngày) | Tự viết một Rule class; mỗi rule có test 422 | – |
+| Response, API Resource, `paginate` | Lõi | B2, chặng 2 | Cùng shape ở list/detail/create/update; có test cấu trúc JSON | – |
+| `simplePaginate`, `cursorPaginate`, `streamDownload` | Mở rộng | Chặng 10 (export) | Giải thích khi nào chọn loại phân trang nào; export CSV lớn không tràn RAM | – |
+| Xử lý lỗi, exception riêng, logging, `Context` | Lõi | B5, chặng 11 | Lỗi nghiệp vụ được render ở một chỗ; tìm nguyên nhân lỗi 500 chỉ từ log | – |
+| URL generation, signed URL | Mở rộng | Chặng 7 (file riêng tư) | Link có chữ ký và hạn dùng; sửa URL thì bị từ chối | – |
+| View và Blade | Mở rộng | Chặng 8 (mail Markdown) | Template mail render đúng dữ liệu | – |
+| Frontend: Vite, starter kit, Inertia/Livewire | Biết | Chặng 2 (Vue SPA riêng) | Giải thích vì sao RentHub chọn SPA riêng thay vì Inertia/Livewire | – |
+
+### 18.3 Eloquent và database (skill.md mục 4–5)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Query Builder, raw SQL có binding, `toRawSql`, `EXPLAIN` | Lõi | Chặng 1, chặng 10 | Đoán đúng SQL của một scope trước khi in ra; đọc được kết quả `EXPLAIN` | – |
+| Migration: khóa ngoại, index, `down()`, thay đổi nhiều bước, `--pretend` | Lõi | B8, chặng 3 | Thêm cột NOT NULL vào bảng có dữ liệu theo nhiều bước mà không mất dữ liệu | – |
+| Factory và Seeder | Lõi | B8 | Test dùng factory/state; seeder chạy lại không tạo trùng | – |
+| Model: fillable, casts, accessor/mutator `Attribute`, soft delete, timestamps | Lõi | Chặng 1–5 | Giải thích vì sao `shop_id` không nằm trong fillable; viết một accessor kiểu mới | – |
+| Quan hệ `hasMany`, `belongsTo`, `belongsToMany` + pivot | Lõi | B6, B7, chặng 4 (`shop_members`) | Pivot có cột vai trò; có test truy vấn theo vai trò | – |
+| Quan hệ `hasManyThrough`, đa hình (`morphMany`) | Mở rộng | Chặng 2 (ảnh), chặng 3 | Dùng một quan hệ đa hình cho ảnh của shop và của đồ | – |
+| Eager loading, `withCount`/`withExists`, `whereHas`, N+1, `preventLazyLoading` | Lõi | B8, chặng 2 | Số truy vấn không đổi khi tăng dữ liệu | – |
+| Local scope | Lõi | Chặng 1 | Tự viết scope lọc cho RentalItem | – |
+| Global scope | Mở rộng | Chặng 4 | Giải thích đánh đổi; nếu dùng thì có test cho job/command | – |
+| Eloquent Collection, LazyCollection, `chunkById`, `lazyById` | Lõi | Chặng 1, chặng 8 | Chỉ ra Builder/Model/Collection trong một đoạn code; xử lý theo lô không bỏ sót dòng | – |
+| Custom cast (ví dụ tiền) | Mở rộng | Chặng 5 | Một cast tự viết có unit test | – |
+| Serialization (`$hidden`, `$appends`, `toArray`) | Biết | – | Giải thích vì sao API dùng Resource thay vì serialize model | – |
+| Model event, observer | Lõi | Chặng 7 (audit) | Observer chạy sau commit; test kiểm tra hệ quả | – |
+| Transaction, `lockForUpdate`, unique index, deadlock | Lõi | Chặng 1 (đã có test rollback), chặng 5 | Hai kết nối MySQL tranh một chiếc đồ, chỉ một bên thành công | – |
+| Redis | Mở rộng | Chặng 10 | Chuyển cache/queue sang Redis, có số đo trước và sau | – |
+| MongoDB và DB khác | Biết | – | Giải thích khi nào không nên dùng MySQL | – |
+
+### 18.4 Bảo mật (skill.md mục 6)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Authentication: guard, provider, Sanctum SPA cookie và token | Lõi | Chặng 4 | Luồng đăng nhập SPA chạy trên trình duyệt; có test 401 | – |
+| Authorization: Gate, Policy, `can`, phân biệt 401/403/404 | Lõi | Chặng 4 | Ma trận test chủ shop / nhân viên / shop khác / chưa đăng nhập | – |
+| Rate limiting | Lõi | Chặng 4 | Test gọi vượt giới hạn trả 429 | – |
+| Hashing, quy tắc mật khẩu | Lõi | Chặng 4 | Giải thích hash khác mã hóa ở đâu | – |
+| Email verification, password reset | Mở rộng | Chặng 4 | Luồng quên mật khẩu cho tài khoản shop có test | – |
+| Encryption, `APP_KEY`, cast `encrypted` | Mở rộng | Chặng 6 | Giải thích hậu quả khi đổi `APP_KEY` và cách xoay key | – |
+| Upload an toàn, file riêng tư | Lõi | Chặng 2, chặng 7 | Test chặn file sai loại hoặc quá cỡ; file riêng tư không mở được bằng URL công khai | – |
+| Webhook có chữ ký, idempotency | Mở rộng | Chặng 6 | Gửi một webhook nhiều lần chỉ được ghi nhận một lần | – |
+| Fortify, Passport, Socialite | Biết | – | Giải thích mỗi cái khác Sanctum ở đâu | – |
+
+### 18.5 Xử lý nền và tích hợp (skill.md mục 7)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Queue, job, retry, `failed_jobs` | Lõi | Chặng 8 | Worker thật xử lý job; job lỗi vào `failed_jobs` và chạy lại được | – |
+| Unique job, chain, batch, job middleware | Mở rộng | Chặng 8, chặng 10 (import) | Một batch import có theo dõi tiến độ | – |
+| Event, listener, dispatch sau commit | Lõi | Chặng 8 | Listener qua queue chạy sau commit; test bằng `Event::fake` | – |
+| Task scheduling, Artisan command | Lõi | Chặng 5 (hết hạn giữ chỗ), chặng 8 | Command có `--dry-run`, chạy hai lần không tạo trùng; lịch có `withoutOverlapping` | – |
+| Mail | Lõi | Chặng 8 | Mail đi qua queue; test bằng `Mail::fake` + `assertQueued` | – |
+| Notification (mail + database) | Mở rộng | Chặng 8 | Một thông báo vừa hiện trong app vừa gửi mail | – |
+| Cache, atomic lock | Lõi | Chặng 10 | Khóa cache có `shop_id`; sửa dữ liệu xong không đọc phải cache cũ | – |
+| File storage | Lõi | Chặng 2, chặng 7 | Test dùng `Storage::fake`; disk riêng tư và công khai dùng đúng chỗ | – |
+| HTTP client | Lõi | Chặng 6 | Có timeout/retry; test bằng `Http::fake` + `preventStrayRequests` | – |
+| Broadcasting, Reverb | Mở rộng | Chặng 9 | Kênh riêng tư từ chối user không thuộc shop | – |
+| Localization | Mở rộng | Chặng 11 | Thông báo validation tiếng Việt; mã lỗi không đổi theo ngôn ngữ | – |
+| Helpers, `Str`, `Arr`, `Number` | Lõi | Xuyên suốt | Phân biệt được `blank`/`filled` với `empty` | – |
+| Search (Scout) | Mở rộng | Chặng 10 | Giải thích khi nào `LIKE` không đủ; thử một driver | – |
+| Processes, Concurrency, Pennant, Prompts | Biết | – | Mỗi cái một câu: dùng để làm gì | – |
+| Package development | Biết | – | Giải thích service provider của package được tự đăng ký thế nào | – |
+
+### 18.6 Test (skill.md mục 8)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Feature test HTTP, database test, `RefreshDatabase` | Lõi | Xuyên suốt từ B1 | Mỗi endpoint đủ ma trận ca ở skill.md 8.2 | – |
+| Fake và mock: Mail, Queue, Event, Http, Storage, thời gian | Lõi | Chặng 2, 5, 6, 8 | Test không gọi mạng thật, không phụ thuộc giờ chạy | – |
+| Unit test logic thuần | Lõi | Chặng 5 (enum, báo giá) | Chạy được mà không cần DB | – |
+| Console test | Mở rộng | Chặng 8 | Test command bằng `artisan()` và mã thoát | – |
+| Test trên MySQL thật | Lõi | Chặng 5, D4 | Có job CI riêng với service MySQL | – |
+| Phá có chủ đích để kiểm độ chặt của test | Lõi | Hằng tháng (advice.md mục 7) | Mọi dòng trong bảng skill.md 8.4 đều đỏ khi phá | – |
+| Browser test (Dusk), chạy test song song, Pest | Biết | – | Giải thích khi nào đáng thêm | – |
+
+### 18.7 Triển khai, công cụ và hệ sinh thái (skill.md mục 9)
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Deployment: nginx + php-fpm, `optimize`, `queue:restart`, maintenance, `storage:link` | Lõi | Chặng 12, D5–D6 | Deploy staging bằng một lệnh; lỗi giữa chừng thì dừng đúng chỗ | – |
+| CI | Lõi | D4 | Commit làm test đỏ thì CI đỏ | – |
+| Pint, Tinker | Lõi | B3, xuyên suốt | Pint sạch; dùng Tinker thử Builder mà không sửa dữ liệu thật | – |
+| Larastan, Pail, Telescope hoặc Debugbar | Mở rộng | Chặng 11 | Larastan mức cơ bản chạy trong CI; tìm ra một N+1 bằng Telescope/Debugbar | – |
+| Horizon, Pulse, Octane | Biết | Chặng 10–12 | Giải thích vấn đề mỗi công cụ giải quyết và điều kiện để dùng | – |
+| Sail, Homestead, Valet, Herd, Envoy, Mix | Biết | – | Giải thích vì sao repo tự viết cấu hình Docker | – |
+| Cashier, Folio, Precognition, Boost | Biết | – | Một câu cho mỗi cái | – |
+| Nâng cấp phiên bản: release notes, upgrade guide | Mở rộng | Sau 22/02/2027 | Repo đang ở Laravel 12, tài liệu chính thức đã có 13.x: đọc upgrade guide, thử nâng trên nhánh riêng, test xanh | – |
+
+### 18.8 Docker (skill.md mục 9.1, sườn ở 9.6)
+
+Docker không thuộc tài liệu Laravel nên có bảng riêng. Bảng dựng theo các phần cơ bản của tài liệu Docker (image và container, Dockerfile, Compose, volume, network) và theo nhu cầu của RentHub. Bảng này cũng chưa đối chiếu với trang chính thức.
+
+| Chủ đề | Mức | Học ở | Đạt khi | Hiện tại |
+| --- | --- | --- | --- | --- |
+| Image, container, layer, vòng đời container | Lõi | B0, D1 | Giải thích vì sao sửa code không cần build lại, còn sửa Dockerfile thì cần | – |
+| Dockerfile: `FROM`, `RUN`, `COPY`, `WORKDIR`, `ARG`/`ENV`, `CMD`/`ENTRYPOINT`, `EXPOSE`; thứ tự lệnh và cache | Lõi | B0, D1 | Giải thích từng dòng `.docker/Dockerfile`; đổi thứ tự lệnh rồi so thời gian build lại | – |
+| Build context và `.dockerignore` | Lõi | D2 | Image không chứa `.env`, `.git` (kiểm tra bằng `docker run --rm <image> ls -a`) | – |
+| Compose: service, `build`, `image`, `depends_on` + `healthcheck`, `restart` | Lõi | B0, D1 | Giải thích từng dòng `docker-compose.yml`; `db` healthy trước khi `app` chạy | – |
+| Mạng: gọi nhau bằng tên service, cổng trong container khác cổng publish ra host | Lõi | B0 | Giải thích `db:3306` trong container khác `127.0.0.1:3307` trên máy ở đâu | – |
+| Volume: bind mount, named volume, vòng đời dữ liệu | Lõi | B0, D2 | Nói đúng mất gì khi xóa container, khi `down`, khi `down -v` | – |
+| Biến môi trường: `environment`, `env_file`, `${VAR}` từ `.env`, `$$` | Lõi | D2 | `docker compose config` ra đúng giá trị; file đã commit không còn secret | – |
+| Lệnh hằng ngày: `up`, `down`, `ps`, `logs`, `exec`, `run --rm`, `build --no-cache`, `config` | Lõi | B0, D1 | Tự tìm ra lỗi kết nối DB chỉ từ `ps` và `logs` | – |
+| Debug trong container: vào shell, kiểm tra mạng (`getent hosts db`), quyền file, biến môi trường | Lõi | D1, D3 | Cố ý đặt sai `DB_HOST` và tìm ra nguyên nhân trong 10 phút | – |
+| Dọn dẹp an toàn: `system df`, `image prune`, `system prune` không kèm `--volumes` | Lõi | D1 | Giải phóng dung lượng mà không mất volume DB | – |
+| Docker trên Windows: WSL2, tốc độ bind mount, xuống dòng LF cho script | Mở rộng | B0 | Giải thích lỗi `\r` khi chạy script `.sh` và vai trò của `.gitattributes` | – |
+| Quyền file và user: `www-data`, uid, `storage/` và `bootstrap/cache`, chạy non-root | Mở rộng | D5–D6 | Container production chạy non-root mà Laravel vẫn ghi được log và cache | – |
+| Image production: multi-stage, `composer install --no-dev`, opcache, image nhỏ | Mở rộng | D6 | Image không có dev dependency; kích thước giảm, có số đo | – |
+| Tách process: nginx + php-fpm / worker / scheduler thành service riêng | Mở rộng | D6, chặng 12 | `queue:work` và `schedule:work` chạy ở container riêng, restart độc lập được | – |
+| Compose theo môi trường: file base + file override, profiles | Mở rộng | D5–D6 | Một file base dùng chung; override cho dev và prod không lặp nội dung | – |
+| Registry: tag, push, pull, ghim phiên bản image | Mở rộng | D4–D6 | CI build và push image; server chỉ pull | – |
+| Bảo mật image: non-root, không để secret trong layer, quét lỗ hổng | Mở rộng | D6 | `docker history` không lộ secret; đọc được một báo cáo quét | – |
+| Docker Swarm, Kubernetes | Biết | Sau D6 | Giải thích vì sao Compose còn đủ cho RentHub | – |
+
+Blade vẫn được học qua mail template; sản phẩm chính dùng Vue SPA. Package chỉ thêm khi có bài toán thật, không cài tất cả cho đủ danh sách. Mỗi tháng (mục 21), đếm số dòng Lõi chưa đạt `TL` của các chặng đã xong: đó là chỗ hổng cần ưu tiên.
 
 ## 19. Tiến độ và việc tiếp theo
 
@@ -470,9 +602,9 @@ Blade vẫn được học qua trang chào, form/session và mail template; sả
 - [ ] Tạo Vue app và màn hình catalog.
 - [ ] Các chặng đặt thuê, thanh toán và mở nhiều shop.
 
-**Tự học không cần trợ lý:** làm theo các bước B1–B8 trong [loi-khuyen-tu-hoc.md](loi-khuyen-tu-hoc.md) (bắt đầu từ B1 test `show`).
+**Tự học không cần trợ lý:** làm theo các bước B0–B8 trong [advice.md](advice.md) (bắt đầu từ B0 dựng Docker, rồi B1 test `show`). Tra chuẩn và cách tự kiểm ở [skill.md](skill.md). Lỗi đã biết của source ghi ở [review-fix-23-11.md](review-fix-23-11.md). Bản đồ kiến thức ở mục 18; lộ trình sau 22/02/2027 ở mục 21.
 
-**Việc ngay tiếp theo:** đánh giá mức hiểu code hiện có bằng một bài nhỏ về Builder/scope và bắt đầu đọc cấu hình Docker. Sau đó hoàn thiện chặng 1 theo lịch ở mục 20. Không tạo lại các model/controller đã có; An tập trung logic và kiểm chứng HTTP, trợ lý có thể chuẩn bị schema để review.
+**Việc ngay tiếp theo:** B0 (tự dựng Docker và giải thích Dockerfile/Compose), kèm bài Builder/scope còn chờ (diễn giải `Shop::forList($params)->paginate(15)`); sau đó B1. Các lỗi trong `review-fix-23-11.md` sửa dần theo B1–B5. Không tạo lại các model/controller đã có; An tập trung vào logic và kiểm chứng HTTP.
 
 ### Checklist trước khi coi một tính năng là xong
 
@@ -497,6 +629,7 @@ Các trường phone, avatar_path và suspended_at nằm trực tiếp trong mig
 
 - Khoảng học: **22/11/2026–22/02/2027**. Đây là kế hoạch điều chỉnh theo kết quả, không phải cam kết thành chuyên gia sau đúng ba tháng.
 - Đã có hơn một năm Laravel/Vue; ưu tiên củng cố PHP/Laravel, SQL, Vue/TypeScript và debugging qua RentHub. Học viên tự viết logic, tự giải thích được quyết định và sửa được lỗi.
+- **Ưu tiên An chốt ngày 23/11/2026:** Laravel và Docker. Vue/TypeScript, phần UI của chặng 3 bên dưới và "một UI dùng được" trong mục tiêu bắt buộc tạm gác cho đến khi An mở lại; khi đó mới bổ sung chuẩn Vue vào `skill.md`.
 - Phạm vi chat này là học Laravel và ôn kiến thức liên quan. An xác nhận mỗi lần tìm đến là đã sẵn sàng học; không đưa đồ án khác vào buổi học hoặc dùng lịch đồ án, công việc, tăng ca để tự giảm nhịp hay trì hoãn nội dung.
 - Tiến theo mức hiểu và kết quả thực hành trong từng buổi; giới hạn thời gian chỉ áp dụng khi An chủ động nêu. Không áp lịch học nhẹ trước giữa tháng 12 hay định mức giờ/tuần từ suy đoán trước đó. Chưa có lịch nhắc tự động.
 - Học Docker ngay; học Linux và CI/CD trong chặng deploy. Kubernetes, realtime, thanh toán sandbox và báo cáo nâng cao là phần mở rộng sau khi nền tảng vững.
@@ -549,5 +682,56 @@ Không nâng mức chỉ vì nói “đã hiểu”, copy được ví dụ ho�
 | 22/11/2026 | An đã bổ sung `@param` cho controller và muốn code tính năng tiếp theo | Đã đọc controller/route: chưa có `show`; chưa đánh giá độc lập Builder/scope hoặc chạy lại test | An tự thêm `GET /api/shop/{shop}` và `show(Shop $shop)`, trả ShopResource kèm branches; review trước khi thêm bài khác |
 | 22/11/2026 | Review lần đầu hàm `show()` do An viết | Có chữ ký `show(Shop $shop): ShopResource`; đang truyền model vào `findOrFail()` rồi lấy collection chi nhánh để bọc ShopResource. Route chưa bật `show`, đã xác nhận bằng route:list; chưa kiểm thử HTTP hành vi | An sửa dùng model đã binding, load branches rồi trả ShopResource của shop; bật route show và thử các ca 200/404/chi nhánh rỗng |
 | 22/11/2026 | Review controller + ShopLogic sau khi An sửa `show()` | `show()` đã dùng binding + `load('branches')`, route show đã bật (route:list). `php -l` qua, chạy lại 19 test/132 assertions đạt; `show` chưa có test. Vướng: Resource dùng `parent::toArray` nên shape response lệch (store/update thiếu branches, show có `deleted_at`, index thì không); route ghi dữ liệu nằm trong nhóm `web` (CSRF); PHPDoc lặp type hint, thiếu return type | An viết feature test cho `show` (200/404/đã xóa mềm/không có chi nhánh), rồi khai báo field rõ ràng trong ShopResource + `whenLoaded('branches')` |
+| 23/11/2026 | Check toàn bộ source và docs; viết lại `advice.md`, thêm `skill.md` và mục 21 | Chạy trên bản copy sạch của HEAD (PHP 8.2, SQLite bộ nhớ): `php -l` qua, 19 test/132 assertions đạt; `pint --test` fail 8 file; curl POST không CSRF token trả 419. Máy chưa có `vendor/`, `.env`; MySQL chưa xác minh; mật khẩu DB đang ghi cứng trong `docker-compose.yml`. Đây là kết quả của trợ lý, chưa phải bài An tự làm | B0: An tự dựng Docker và chạy được `php artisan test` trong container; sau đó B1 (test `show`) |
+| 23/11/2026 | Theo yêu cầu An: viết lại `skill.md` (bỏ lời giải, chỉ giữ chuẩn và cách tự kiểm); ghi lỗi source vào `review-fix-23-11.md`; mở rộng mục 18 thành bản đồ kiến thức Laravel đầy đủ | Chỉ đổi tài liệu, không sửa code. Từng lỗi đã được xác nhận lại bằng cách đọc source; chưa chạy lại test/Pint (máy không có PHP trên PATH). Mục lục Laravel 12 trong mục 18 do trợ lý dựng, chưa đối chiếu với trang chính thức | Như dòng trên; thêm bài đối chiếu mục 18 với sidebar tài liệu Laravel 12 |
+| 23/11/2026 | An chốt ưu tiên: Laravel và Docker; Vue/TypeScript tạm gác | Thêm bảng Docker 18.8, mở rộng skill.md 9.1; sửa hướng dẫn B0 ở mục 3 (đoạn `.env` SQLite thành điều kiện, đường dẫn WSL cũ). Chỉ đổi tài liệu, chưa chạy lại gì | B0 tự làm chỉ với tài liệu; ghi lại mỗi chỗ kẹt hoặc tài liệu khó hiểu để sửa tiếp |
+| 23/11/2026 | An yêu cầu trợ lý sửa review-fix mục 2–4; bỏ qua mục 1 | Trợ lý viết: `routes/api.php` + `/api/shops`, `ShopResource` khai báo field, `ShopBranchResource`, `load('branches')` ở store/update, `ShopResponseTest`. Đã chạy (PHP 8.4, SQLite bộ nhớ): 22 passed/224 assertions; curl POST không token trả 422; phá `load` thì test đỏ. Đây là code của trợ lý, An chưa tự làm lại | An giải thích được vì sao `branches()->get()` không gán quan hệ còn `load()` thì có; B1 (test `show` 4 ca) vẫn để An tự viết |
+| 23/11/2026 | An chuyển `load('branches')` vào `saveFromRequest()`; sau đó yêu cầu xóa toàn bộ thư mục `tests/` | 22 test qua ngay trước khi xóa. Đã xóa `tests/` (kể cả `TestCase.php`); các file test cũ khôi phục được từ git, `ShopResponseTest` thì không. Docs (advice B1–B8, skill mục 8, review-fix "Xong khi") vẫn tham chiếu test | Chốt lại có viết test hay không, rồi sửa docs theo |
 
 Khi nối lại buổi học, đọc dòng nhật ký mới nhất và kiểm tra code hiện tại. Chỉ lưu thay đổi mục tiêu, kết quả thực hành và điều còn vướng; không dùng nhật ký thay cho kiểm chứng mới.
+
+## 21. Lộ trình tự đi sau 22/02/2027 (không cần trợ lý)
+
+Mục này để An tự quyết việc tiếp theo khi không có ai hướng dẫn. Các mốc dưới đây là thứ tự ưu tiên, không phải lịch cam kết; điều chỉnh theo kết quả thực hành.
+
+### Nguyên tắc chọn việc tiếp theo
+
+1. Chỉ sang giai đoạn sau khi giai đoạn trước qua **tiêu chí chuyển giai đoạn** bên dưới, có bằng chứng (test, log, deploy), không chỉ vì đã đọc xong.
+2. Mỗi lần chỉ mở một mặt trận mới (một tính năng, hoặc một công cụ vận hành), không mở nhiều cùng lúc.
+3. Trước khi thêm công nghệ mới (Redis, search engine, Kubernetes...) phải viết ra vấn đề cụ thể nó giải quyết và số đo cho thấy cách hiện tại không đủ.
+4. Mỗi quyết định kiến trúc ghi 4 dòng vào roadmap: quyết định, lý do, hệ quả, test chứng minh.
+5. Chọn bài tiếp theo từ bản đồ mục 18: trước hết là dòng Lõi chưa đạt `TL`, sau đó là dòng Mở rộng của chặng đang làm, cuối cùng là các dòng Biết.
+
+### Các giai đoạn tiếp theo
+
+| Giai đoạn | Trọng tâm | Tiêu chí chuyển giai đoạn |
+| --- | --- | --- |
+| **A. Củng cố lõi** | Hoàn tất CRUD shop/chi nhánh/RentalItem, Factory/Seeder, Auth và Policy theo shop, Pint và CI bắt buộc xanh, bắt đầu phân tích tĩnh (Larastan, tăng mức dần), eager loading không N+1 | Mọi endpoint có test 401/403/404/422; CI xanh; người khác đọc README dựng được môi trường |
+| **B. Đặt thuê** | `rental_units`, lịch bảo trì, truy vấn chiếc còn trống, báo giá, `bookings` + `unit_reservations` với khóa dòng, giữ chỗ có hạn, scheduler hết hạn (roadmap mục 8, 10) | Hai request đồng thời tranh một chiếc chỉ một thành công, kiểm chứng trên MySQL bằng hai kết nối; test biên khoảng ngày `[start, end)` |
+| **C. Vận hành thật** | Image production nginx + php-fpm, tách web / worker / scheduler, staging, log tập trung và cảnh báo lỗi, backup và **diễn tập restore**, kế hoạch rollback (roadmap mục 17; advice.md D5–D6) | Deploy được lên staging bằng một lệnh; khôi phục được từ backup; rollback thử thành công |
+| **D. Thanh toán và thông báo** | Cổng sandbox, `payments`/`payment_events`, webhook xác thực chữ ký và xử lý trùng, hoàn cọc, event/queue/notification (mục 11–13) | Webhook gửi nhiều lần chỉ ghi nhận một lần; tiền không khớp thì không xác nhận đơn |
+| **E. Mở rộng** | Nhiều shop và kiểm duyệt, tìm kiếm và báo cáo, tối ưu bằng số đo, realtime, Kubernetes khi đã có nhu cầu vận hành thật (mục 14–15) | Có số đo trước/sau; không rò dữ liệu giữa shop |
+
+Frontend (Vue 3 + TypeScript) tạm gác theo ưu tiên ngày 23/11/2026 (mục 20). Khi mở lại: mỗi tính năng API xong thì làm màn hình tương ứng, tách client HTTP và kiểu dữ liệu, xử lý loading/rỗng/lỗi/422 (xem `skills/vue-frontend` ở `C:\dev\skill`).
+
+### Nhịp hằng tháng (khoảng 2 giờ)
+
+1. Chạy `php artisan test` và `pint --test`; ghi ngày, môi trường, kết quả.
+2. Làm một bài tự đánh giá trong advice.md mục 7 (làm lại từ trống, phá có chủ đích, giải thích bằng văn, đo).
+3. Xem lại danh sách tồn đọng ở mục 19; xóa mục đã xong, thêm mục mới.
+4. Đọc lại một skill liên quan trong `C:\dev\skill` và ghi một điều mình sẽ làm khác đi.
+5. Cập nhật cột "Hiện tại" ở mục 18 (và mức kỹ năng ở mục 20) chỉ khi có bằng chứng tự làm lại được; đếm số dòng Lõi chưa đạt `TL`.
+
+### Khi kẹt lâu
+
+- Quá 20 phút không tiến triển thì viết ra input, kết quả mong đợi, kết quả thực tế, những gì đã thử; thường chính việc viết này tìm ra lỗi.
+- Quá 2 giờ thì thu nhỏ bài toán (một test, một request, một bảng), hoặc chuyển sang bước nhỏ khác và quay lại sau.
+- Không đoán trong môi trường production: tái hiện ở local trước, có test, rồi mới sửa.
+
+### Tài liệu bám
+
+- [advice.md](advice.md): việc làm B0–B8, D1–D6, debug, tự đánh giá.
+- [skill.md](skill.md): chuẩn làm đúng Laravel / SQL / DevOps, cách tự kiểm và checklist; không chứa lời giải.
+- [review-fix-23-11.md](review-fix-23-11.md): lỗi đã biết của source ngày 23/11/2026.
+- Mục 18: bản đồ toàn bộ kiến thức Laravel và mức đã đạt.
+- `C:\dev\skill`: thư viện skill và handbook; `research/` chứa tên thật hệ thống nội bộ nên không chép sang repo.
