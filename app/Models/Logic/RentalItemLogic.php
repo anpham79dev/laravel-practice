@@ -2,6 +2,7 @@
 
 namespace App\Models\Logic;
 
+use App\Models\Category;
 use App\Models\Shop;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -10,5 +11,10 @@ trait RentalItemLogic
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 }

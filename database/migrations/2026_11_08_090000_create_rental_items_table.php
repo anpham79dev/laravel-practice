@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('rental_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('shop_id')->constrained('shops')->restrictOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->restrictOnDelete();
             $table->string('item_name');
             $table->text('description')->nullable();
             $table->unsignedBigInteger('rental_price_per_day');

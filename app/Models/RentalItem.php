@@ -10,6 +10,7 @@ class RentalItem extends Model
     use RentalItemLogic;
 
     protected $fillable = [
+        'category_id',
         'item_name',
         'description',
         'rental_price_per_day',
