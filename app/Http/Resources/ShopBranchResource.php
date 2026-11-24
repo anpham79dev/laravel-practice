@@ -13,15 +13,15 @@ class ShopBranchResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id'          => $this->id,
             'branch_name' => $this->branch_name,
-            'address' => $this->address,
-            'phone' => $this->phone,
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
-            'is_active' => $this->is_active,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'address'     => $this->address,
+            'phone'       => $this->phone,
+            'latitude'    => $this->latitude,
+            'longitude'   => $this->longitude,
+            'is_active'   => $this->is_active,
+            'created_at'  => $this->created_at,
+            'updated_at'  => $this->updated_at,
         ];
     }
 }

@@ -20,7 +20,7 @@ class RentalItem extends Model
 
     protected $casts = [
         'rental_price_per_day' => 'integer',
-        'deposit_amount' => 'integer',
-        'is_active' => 'boolean',
+        'deposit_amount'       => 'integer',
+        'is_active'            => 'boolean',
     ];
 }
