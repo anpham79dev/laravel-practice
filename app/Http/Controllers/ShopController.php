@@ -51,7 +51,7 @@ class ShopController extends Controller
     public function update(StoreShopRequest $request, Shop $shop)
     {
         $data = $shop->saveFromRequest($request->validated());
-
+        
         return new ShopResource($data);
     }
 

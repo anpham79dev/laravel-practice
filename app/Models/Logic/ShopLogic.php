@@ -83,6 +83,8 @@ trait ShopLogic
             $this->fill($data)->save();
             $this->syncBranches($data['branches']);
 
+            $this->load('branches');
+
             return $this;
         });
     }
